@@ -1,8 +1,10 @@
 import 'dart:async';
 
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:intl/intl.dart';
+import 'package:jacurfew/models/curfew_dates.dart';
 import 'package:jacurfew/models/time.dart';
 import 'package:jacurfew/services/firebase_service.dart';
 import 'package:jacurfew/services/notification_service.dart';
@@ -26,31 +28,34 @@ class _TimerPageState extends State<TimerPage> {
 
   static final DateFormat Timeformatter = DateFormat('hh:mm aaa');
 
-  static final DateTime cufrewStartDate = DateTime(2021, 8, 28, 6, 0, 0);
-  static final DateTime cufrewEndDate = DateTime(2021, 09, 1, 5, 0, 0);
+  Color barcolor = CustomColors.progessbarColor;
+  Color progessbarColor = CustomColors.strokeColor;
+
+  DateTime cufrewStartDate = DateTime(2021, 1, 1, 0, 0, 0);
+  DateTime cufrewEndDate = DateTime(2021, 12, 30, 0, 0, 0);
   int hoursBetweenDays = 0;
   var time = TimeCalculator();
 
   FireBase firebase = new FireBase();
   final String formatted = monthNameformatter.format(now);
-  String cufrewStartDateformatted = dateformatter.format(cufrewStartDate);
-  String cufrewEndDateformatted = dateformatter.format(cufrewEndDate);
+  String cufrewStartDateformatted = '';
+  String cufrewEndDateformatted = '';
 
-  String cufrewStartTimeformatted = Timeformatter.format(cufrewStartDate);
+  String cufrewStartTimeformatted = '';
 
-  String cufrewEndTimeformatted = Timeformatter.format(cufrewEndDate);
+  String cufrewEndTimeformatted = '';
 
   int maxseconds = 0;
   int seconds = 0;
   Duration duration = Duration(hours: 0);
   Timer? timer;
 
-  bool countDown = true;
+  bool isCurfewTime = false;
   bool showdays = false;
+
   @override
   void initState() {
     super.initState();
-
     reset();
     startTimer();
     notificationInit();
@@ -78,7 +83,7 @@ class _TimerPageState extends State<TimerPage> {
   }
 
   void addTime() {
-    final addSeconds = countDown ? -1 : 1;
+    final addSeconds = -1;
     setState(() {
       final diffinseconds = duration.inSeconds + addSeconds;
       if (diffinseconds < 0) {
@@ -100,13 +105,62 @@ class _TimerPageState extends State<TimerPage> {
   }
 
   void reset() {
-    if (countDown) {
-      seconds = time.secondsBetween(now, cufrewEndDate);
-      maxseconds = time.secondsBetween(cufrewStartDate, cufrewEndDate);
-      setState(() => duration = Duration(seconds: seconds));
-    } else {
-      setState(() => duration = Duration());
-    }
+    firebase.getMessageQuery().once().then((DataSnapshot snapshot) {
+      final json = snapshot.value as Map<dynamic, dynamic>;
+      json.forEach((key, value) {
+        final curfewDates = CurfewDates.fromJson(value);
+
+        setState(() {
+          cufrewStartDate = curfewDates.cufrewStartDate;
+          cufrewEndDate = curfewDates.cufrewEndDate;
+
+          int diffInSeconds =
+              time.secondsBetween(now, curfewDates.cufrewStartDate);
+
+          if (diffInSeconds < 0) {
+            isCurfewTime = true;
+            barcolor = CustomColors.curfew_progessbarColor;
+            progessbarColor = CustomColors.curfew_strokeColor;
+            cufrewStartDateformatted =
+                dateformatter.format(curfewDates.cufrewStartDate);
+            cufrewEndDateformatted =
+                dateformatter.format(curfewDates.cufrewEndDate);
+
+            cufrewStartTimeformatted =
+                Timeformatter.format(curfewDates.cufrewStartDate);
+
+            cufrewEndTimeformatted =
+                Timeformatter.format(curfewDates.cufrewEndDate);
+
+            seconds = time.secondsBetween(now, curfewDates.cufrewEndDate);
+
+            maxseconds = time.secondsBetween(
+                curfewDates.cufrewStartDate, curfewDates.cufrewEndDate);
+          } else {
+            isCurfewTime = false;
+            barcolor = CustomColors.progessbarColor;
+            progessbarColor = CustomColors.strokeColor;
+            cufrewStartDateformatted =
+                dateformatter.format(curfewDates.cufrewStartDate);
+            cufrewEndDateformatted =
+                dateformatter.format(curfewDates.cufrewEndDate);
+
+            cufrewStartTimeformatted =
+                Timeformatter.format(curfewDates.cufrewStartDate);
+
+            cufrewEndTimeformatted =
+                Timeformatter.format(curfewDates.cufrewEndDate);
+
+            seconds = time.secondsBetween(now, curfewDates.cufrewStartDate);
+
+            maxseconds = time.secondsBetween(
+                curfewDates.previousEndDate, curfewDates.cufrewStartDate);
+          }
+
+          duration = Duration(seconds: seconds);
+        });
+      });
+    });
   }
 
   Widget _buildTime() {
@@ -116,7 +170,7 @@ class _TimerPageState extends State<TimerPage> {
     final hours_12 = twoDigits(duration.inHours.remainder(24));
     final minutes = twoDigits(duration.inMinutes.remainder(60));
     final seconds = twoDigits(duration.inSeconds.remainder(60));
-
+    final format = showdays ? 'day/hour/minute' : 'hour/minute/second';
     return Column(mainAxisAlignment: MainAxisAlignment.center, children: [
       Visibility(
           visible: !showdays,
@@ -139,27 +193,28 @@ class _TimerPageState extends State<TimerPage> {
               Text('$hours_12:', style: Theme.of(context).textTheme.headline2),
               Text('$minutes', style: Theme.of(context).textTheme.headline2),
             ],
-          ))
+          )),
+      Text('$format', style: Theme.of(context).textTheme.bodyText2),
     ]);
   }
 
   Widget _buildTimer() {
+    double test = 1 - seconds / maxseconds;
     return Stack(
       fit: StackFit.expand,
       children: [
         InkWell(
           onTap: () {
             toggleTimerformat();
-            firebase.saveDates();
           },
           child: CircularPercentIndicator(
             radius: MediaQuery.of(context).size.width / 1.3,
             lineWidth: 25.0,
             animation: false,
-            backgroundColor: CustomColors.progessbarColor,
+            backgroundColor: barcolor,
             percent: 1 - seconds / maxseconds,
             center: _buildTime(),
-            progressColor: CustomColors.stockColor,
+            progressColor: progessbarColor,
             circularStrokeCap: CircularStrokeCap.round,
           ),
         ),

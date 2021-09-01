@@ -1,4 +1,5 @@
 import 'package:firebase_database/firebase_database.dart';
+import 'package:jacurfew/models/curfew_dates.dart';
 
 class FireBase {
   final DatabaseReference _dateRef =
@@ -7,9 +8,9 @@ class FireBase {
   void saveDates() {
     _dateRef.push().set({
       'sreachdate': DateTime.now().toString(),
-      'islockeddown': true,
-      'cufrewStartDate': DateTime(2021, 8, 28, 6, 0, 0).toString(),
-      'cufrewEndDate': DateTime(2021, 09, 1, 5, 0, 0).toString(),
+      'iscufrew': false,
+      'cufrewStartDate': DateTime(2021, 09, 1, 19, 0, 0).toString(),
+      'cufrewEndDate': DateTime(2021, 09, 2, 5, 0, 0).toString(),
     });
   }
 

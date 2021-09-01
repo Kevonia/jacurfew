@@ -16,6 +16,7 @@ void main() {
 class TimerApp extends StatelessWidget {
   // This widget is the root of your application.
   final Future<FirebaseApp> _fbApp = Firebase.initializeApp();
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(

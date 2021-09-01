@@ -15,7 +15,9 @@ extension ColorExtension on String {
 class CustomColors {
   static final Color primaryColor = Colors.grey.shade600;
   static final Color secondaryColor = Colors.grey.shade400;
-  static final Color stockColor = '#36B649'.toColor();
+  static final Color curfew_strokeColor = Colors.redAccent;
+  static final Color curfew_progessbarColor = Colors.grey.shade400;
+  static final Color strokeColor = '#36B649'.toColor();
   static final Color progessbarColor = '#FFF200'.toColor();
   static final Color textColor = Colors.grey.shade400;
 }

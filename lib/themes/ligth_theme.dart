@@ -30,7 +30,8 @@ class CustomTheme {
               textStyle: TextStyle(fontSize: 14, color: CustomColors.textColor),
               fontWeight: FontWeight.w700),
           bodyText2: GoogleFonts.roboto(
-              textStyle: TextStyle(fontSize: 18, color: Colors.black)),
+              textStyle:
+                  TextStyle(fontSize: 18, color: CustomColors.textColor)),
         ));
   }
 }
