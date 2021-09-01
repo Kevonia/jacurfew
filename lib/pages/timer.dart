@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:intl/intl.dart';
 import 'package:jacurfew/models/time.dart';
+import 'package:jacurfew/services/firebase_service.dart';
 import 'package:jacurfew/services/notification_service.dart';
 import 'package:jacurfew/themes/colors.dart';
 
@@ -29,11 +30,13 @@ class _TimerPageState extends State<TimerPage> {
   static final DateTime cufrewEndDate = DateTime(2021, 09, 1, 5, 0, 0);
   int hoursBetweenDays = 0;
   var time = TimeCalculator();
+
+  FireBase firebase = new FireBase();
   final String formatted = monthNameformatter.format(now);
   String cufrewStartDateformatted = dateformatter.format(cufrewStartDate);
   String cufrewEndDateformatted = dateformatter.format(cufrewEndDate);
 
-  String cufrewStartTimeformatted = Timeformatter.format(cufrewEndDate);
+  String cufrewStartTimeformatted = Timeformatter.format(cufrewStartDate);
 
   String cufrewEndTimeformatted = Timeformatter.format(cufrewEndDate);
 
@@ -147,11 +150,7 @@ class _TimerPageState extends State<TimerPage> {
         InkWell(
           onTap: () {
             toggleTimerformat();
-            NotificationService.showScheduleNotifications(
-                title: 'Cufrew Reminder',
-                body: "Cufrew Start in 2 hours",
-                payload: 'Cufrew.Reminder',
-                scheduleDate: now.add(Duration(seconds: 12)));
+            firebase.saveDates();
           },
           child: CircularPercentIndicator(
             radius: MediaQuery.of(context).size.width / 1.3,

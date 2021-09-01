@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.jacurfew">
+    package="com.KovecMedia.Jacufew">
    <application
         android:label="jacurfew"
         android:icon="@mipmap/launcher_icon">

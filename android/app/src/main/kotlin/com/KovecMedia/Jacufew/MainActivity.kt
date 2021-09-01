@@ -1,4 +1,4 @@
-package com.example.jacurfew
+package com.KovecMedia.Jacufew
 
 import io.flutter.embedding.android.FlutterActivity
 
